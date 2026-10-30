@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="330" viewBox="0 0 920 330" role="img" aria-labelledby="title description">
+  <title id="title">Official Phase 2 dataset: FCFS and SJF CPU timelines</title>
+  <desc id="description">Both charts use a shared scale from 0 to 12 CPU cycles. FCFS runs P0 from 0 to 2, P1 from 2 to 4, P2 from 4 to 5, P3 from 5 to 8, and P4 from 8 to 12. SJF runs P0 from 0 to 2, P2 from 2 to 3, P1 from 3 to 5, P3 from 5 to 8, and P4 from 8 to 12. Neither schedule has idle time.</desc>
+  <rect width="920" height="330" fill="white"/>
+  <g font-family="Arial, Helvetica, sans-serif" fill="#18283b">
+    <text x="26" y="30" font-size="21" font-weight="bold">Official dataset: CPU scheduling Gantt charts</text>
+    <text x="26" y="55" font-size="14">Non-preemptive execution · no context-switch delay · each process keeps the same color</text>
+    <g stroke="#d5dce5" stroke-dasharray="3 4">
+      <path d="M100 75V250 M160 75V250 M220 75V250 M280 75V250 M340 75V250 M400 75V250 M460 75V250 M520 75V250 M580 75V250 M640 75V250 M700 75V250 M760 75V250 M820 75V250"/>
+    </g>
+    <g font-size="16" font-weight="bold">
+      <text x="26" y="120">FCFS</text>
+      <text x="26" y="210">SJF</text>
+    </g>
+    <g stroke="#33465b" stroke-width="1.5">
+      <rect x="100" y="90" width="120" height="50" fill="#c6dff5"/>
+      <rect x="220" y="90" width="120" height="50" fill="#ffe1a3"/>
+      <rect x="340" y="90" width="60" height="50" fill="#bfe6d4"/>
+      <rect x="400" y="90" width="180" height="50" fill="#ded2f2"/>
+      <rect x="580" y="90" width="240" height="50" fill="#f5cfc7"/>
+      <rect x="100" y="180" width="120" height="50" fill="#c6dff5"/>
+      <rect x="220" y="180" width="60" height="50" fill="#bfe6d4"/>
+      <rect x="280" y="180" width="120" height="50" fill="#ffe1a3"/>
+      <rect x="400" y="180" width="180" height="50" fill="#ded2f2"/>
+      <rect x="580" y="180" width="240" height="50" fill="#f5cfc7"/>
+    </g>
+    <g text-anchor="middle" font-size="17" font-weight="bold">
+      <text x="160" y="121">P0</text><text x="280" y="121">P1</text><text x="370" y="121">P2</text><text x="490" y="121">P3</text><text x="700" y="121">P4</text>
+      <text x="160" y="211">P0</text><text x="250" y="211">P2</text><text x="340" y="211">P1</text><text x="490" y="211">P3</text><text x="700" y="211">P4</text>
+    </g>
+    <path d="M100 250H820" stroke="#33465b" stroke-width="1.5"/>
+    <g text-anchor="middle" font-size="14">
+      <text x="100" y="272">0</text><text x="160" y="272">1</text><text x="220" y="272">2</text><text x="280" y="272">3</text><text x="340" y="272">4</text><text x="400" y="272">5</text><text x="460" y="272">6</text><text x="520" y="272">7</text><text x="580" y="272">8</text><text x="640" y="272">9</text><text x="700" y="272">10</text><text x="760" y="272">11</text><text x="820" y="272">12</text>
+      <text x="460" y="299">Simulation clock (CPU cycles)</text>
+    </g>
+  </g>
+</svg>

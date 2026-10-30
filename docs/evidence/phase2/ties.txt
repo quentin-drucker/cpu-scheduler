@@ -1,0 +1,131 @@
+
+
+
+COM326 | PROJECT PHASE 2
+Process Manager  |  Current PCBs: 0
+------------------------------------------------------------------------------
+Previous action: Ready. Load a file or add a PCB to begin.
+
+
+Choose an action
+------------------------------------------------------------------------------
+1. Load PCB data from file
+2. View PCB list
+3. Add new PCB
+4. Save PCB data to file
+5. Edit a PCB
+6. Remove a PCB
+7. Exit
+8. Run CPU scheduler
+
+Enter choice: 
+
+
+COM326 | PROJECT PHASE 2
+Load  |  Current PCBs: 0
+------------------------------------------------------------------------------
+Previous action: Ready. Load a file or add a PCB to begin.
+
+
+Load PCB Data
+------------------------------------------------------------------------------
+
+
+
+COM326 | PROJECT PHASE 2
+Data Files — Page 1 of 2  |  Current PCBs: 0
+------------------------------------------------------------------------------
+1. dataset1.txt
+2. dataset2.txt
+3. dataset3.txt
+4. invalid_data_test.txt
+5. phase1_demo.txt
+6. phase1_demo2.txt
+7. phase2_idle.txt
+8. phase2_nonpreemptive.txt
+9. phase2_official.txt
+N. Next page
+M. Enter a file path manually
+C. Cancel loading
+Choose a file or option: Enter file name: 
+Successfully loaded 4 PCB(s).
+
+
+
+COM326 | PROJECT PHASE 2
+Process Manager  |  Current PCBs: 4
+------------------------------------------------------------------------------
+Previous action: Load: Successfully loaded 4 PCB(s).
+
+
+Choose an action
+------------------------------------------------------------------------------
+1. Load PCB data from file
+2. View PCB list
+3. Add new PCB
+4. Save PCB data to file
+5. Edit a PCB
+6. Remove a PCB
+7. Exit
+8. Run CPU scheduler
+
+Enter choice: 
+
+
+COM326 | PROJECT PHASE 2
+Schedule  |  Current PCBs: 4
+------------------------------------------------------------------------------
+Previous action: Load: Successfully loaded 4 PCB(s).
+
+
+Run CPU Scheduler
+------------------------------------------------------------------------------
+1. First-Come, First-Served (FCFS)
+2. Shortest-Job-First (SJF)
+C. Cancel
+Choose an algorithm (1, 2, or C): 
+SJF Schedule
+------------------------------------------------------------------------------
+Jobs run to completion; context-switch penalties are ignored.
+All times are in CPU clock cycles. Turnaround = Finish - Arrival.
+Order  ID  Arrival  CPU Required  Start  Finish  Turnaround  
+------------------------------------------------------------------------------
+1      30  0        2             0      2       2           
+2      20  0        2             2      4       4           
+3      10  1        2             4      6       5           
+4      40  2        2             6      8       6           
+------------------------------------------------------------------------------
+Average Turnaround Time: 4.25 cycles
+SJF completed for 4 processes. Average turnaround: 4.25 cycles.
+
+
+
+COM326 | PROJECT PHASE 2
+Process Manager  |  Current PCBs: 4
+------------------------------------------------------------------------------
+Previous action: Schedule: SJF completed for 4 processes. Average turnaround:
+4.25 cycles.
+
+
+Choose an action
+------------------------------------------------------------------------------
+1. Load PCB data from file
+2. View PCB list
+3. Add new PCB
+4. Save PCB data to file
+5. Edit a PCB
+6. Remove a PCB
+7. Exit
+8. Run CPU scheduler
+
+Enter choice: 
+
+
+COM326 | PROJECT PHASE 2
+Exit  |  Current PCBs: 4
+------------------------------------------------------------------------------
+Previous action: Schedule: SJF completed for 4 processes. Average turnaround:
+4.25 cycles.
+
+
+Exiting Process Manager.

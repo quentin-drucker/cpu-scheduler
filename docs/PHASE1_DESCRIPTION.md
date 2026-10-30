@@ -1,8 +1,8 @@
 # COM326 — Project 1, Phase 1: Code Walkthrough
 
-[Overall project](PROJECT_DESCRIPTION.md) | [Phase 2 additions](PHASE2_DESCRIPTION.md)
+[Overall project](../README.md) | [Phase 2 additions](PHASE2_DESCRIPTION.md)
 
-This guide explains the process-management features introduced in Phase 1 and retained in the current application. Historical details are labeled below: Phase 1 had seven menu options and 58 tests; the current Phase 2 application has eight options and 87 tests. Source links open the current files. See the [Phase 2 guide](PHASE2_DESCRIPTION.md) for scheduling and the [overall guide](PROJECT_DESCRIPTION.md#easier-manual-loading-and-saving) for current filename shortcuts.
+This guide explains the process-management features introduced in Phase 1 and retained in the current application. Historical details are labeled below: Phase 1 had seven menu options and 58 tests; the current Phase 2 application has eight options and 87 tests. Source links open the current files. See the [Phase 2 guide](PHASE2_DESCRIPTION.md) for scheduling and the [overall guide](../README.md#easier-manual-loading-and-saving) for current filename shortcuts.
 
 This program keeps a collection of Process Control Blocks (PCBs). Each PCB holds the six values describing one process. The text menu allows a process set to be loaded from a file, displayed, added to through manual input, edited, reduced by removing records, and saved for later use.
 
@@ -28,20 +28,20 @@ At a high level, `main.py` handles user interaction, while `PCBManager` keeps a 
 
 | File | Purpose |
 | --- | --- |
-| [main.py](main.py) | Handles the menu, prompts, table, and messages shown to the user. |
-| [cli_style.py](cli_style.py) | Central theme, colors, headings, table layout, screen clearing, prompts, and result pauses. |
-| [file_picker.py](file_picker.py) | Lists data files nine at a time and handles file selection, navigation, manual paths, and cancel. |
-| [pcb.py](pcb.py) | Defines one PCB and checks its individual values. |
-| [pcb_manager.py](pcb_manager.py) | Stores the PCB collection, checks rules involving other processes, and loads and saves files. |
-| [tests/test_requirements.py](tests/test_requirements.py) | Checks the four scored requirements, field validation through both input paths, and preservation after failed loads. |
-| [tests/test_saving.py](tests/test_saving.py) | Checks saving, reloading, file errors, and the menu flow using Python's built-in testing tools. |
-| [tests/test_file_picker.py](tests/test_file_picker.py) | Checks file selection, page boundaries, navigation, and loading through the picker. |
-| [tests/test_editing.py](tests/test_editing.py) | Checks field edits, removal, rejected changes, cancellation, and saving a revised collection. |
-| [tests/test_cli_style.py](tests/test_cli_style.py) | Checks terminal effects, plain output, result feedback, pauses, and narrow-window formatting. |
-| [data/dataset1.txt](data/dataset1.txt), [dataset2.txt](data/dataset2.txt), [dataset3.txt](data/dataset3.txt) | Hold the three separate sample process sets, with 4, 5, and 7 records. |
-| [data/invalid_data_test.txt](data/invalid_data_test.txt) | Provides a malformed record for testing the field-count check. |
+| [main.py](../main.py) | Handles the menu, prompts, table, and messages shown to the user. |
+| [cli_style.py](../cli_style.py) | Central theme, colors, headings, table layout, screen clearing, prompts, and result pauses. |
+| [file_picker.py](../file_picker.py) | Lists data files nine at a time and handles file selection, navigation, manual paths, and cancel. |
+| [pcb.py](../pcb.py) | Defines one PCB and checks its individual values. |
+| [pcb_manager.py](../pcb_manager.py) | Stores the PCB collection, checks rules involving other processes, and loads and saves files. |
+| [tests/test_requirements.py](../tests/test_requirements.py) | Checks the four scored requirements, field validation through both input paths, and preservation after failed loads. |
+| [tests/test_saving.py](../tests/test_saving.py) | Checks saving, reloading, file errors, and the menu flow using Python's built-in testing tools. |
+| [tests/test_file_picker.py](../tests/test_file_picker.py) | Checks file selection, page boundaries, navigation, and loading through the picker. |
+| [tests/test_editing.py](../tests/test_editing.py) | Checks field edits, removal, rejected changes, cancellation, and saving a revised collection. |
+| [tests/test_cli_style.py](../tests/test_cli_style.py) | Checks terminal effects, plain output, result feedback, pauses, and narrow-window formatting. |
+| [data/dataset1.txt](../data/dataset1.txt), [dataset2.txt](../data/dataset2.txt), [dataset3.txt](../data/dataset3.txt) | Hold the three separate sample process sets, with 4, 5, and 7 records. |
+| [data/invalid_data_test.txt](../data/invalid_data_test.txt) | Provides a malformed record for testing the field-count check. |
 
-The assignment is included in [Instructions -- Project Phase 1.pdf](Assignment%20Specifications%20for%20Phase%201/Instructions%20-%20Project%20Phase%201.pdf). The field rules and original sample sets are in [the supplied data document](Assignment%20Specifications%20for%20Phase%201/From%20Moodle%20-%20Project%20Phase%20Data%20File.txt).
+The assignment is *Instructions - Project Phase 1.pdf*, and the field rules and original sample sets are in the supplied Moodle data document. Both are kept locally in `Assignment Specifications for Phase 1/`, which is not published to the repository.
 
 Source links below open the relevant files. Function names identify the code to look for without depending on line numbers that change when comments are added.
 
@@ -151,17 +151,17 @@ Run the following from the project folder in a terminal (Python 3.8 or later):
 python3 main.py
 ```
 
-In [main.py, `main()`](main.py), one `PCBManager` is created before the menu loop. Keeping the same manager allows loaded and manually added records to stay available between menu choices. The `if`/`elif` blocks call the function for the selected option. Choosing Exit uses `break` to leave the loop; an unrecognized choice prints an error.
+In [main.py, `main()`](../main.py), one `PCBManager` is created before the menu loop. Keeping the same manager allows loaded and manually added records to stay available between menu choices. The `if`/`elif` blocks call the function for the selected option. Choosing Exit uses `break` to leave the loop; an unrecognized choice prints an error.
 
 The Phase 1 menu options were **1. Load**, **2. View**, **3. Add**, **4. Save**, **5. Edit**, **6. Remove**, and **7. Exit**. These remain in the current application, which adds **8. Run CPU scheduler**.
 
-In [pcb.py, `PCB.__init__()`](pcb.py), each PCB stores `process_id`, `memory`, `arrival_time`, `cpu_required`, `quantum`, and `context_switch_penalty`. The constructor runs when a PCB is created and immediately calls `validate()`.
+In [pcb.py, `PCB.__init__()`](../pcb.py), each PCB stores `process_id`, `memory`, `arrival_time`, `cpu_required`, `quantum`, and `context_switch_penalty`. The constructor runs when a PCB is created and immediately calls `validate()`.
 
-In [pcb_manager.py, `PCBManager.__init__()`](pcb_manager.py), `self.pcb_list` starts as an empty Python list. Each list entry is a complete PCB object, keeping the six related values together. This list holds the current process set; it is not a scheduling queue.
+In [pcb_manager.py, `PCBManager.__init__()`](../pcb_manager.py), `self.pcb_list` starts as an empty Python list. Each list entry is a complete PCB object, keeping the six related values together. This list holds the current process set; it is not a scheduling queue.
 
 ## Requirement 1 — Load PCB data (25 pts)
 
-The menu calls [main.py, `load_pcbs_from_input()`](main.py). This function calls [file_picker.py, `choose_data_file()`](file_picker.py) to select a path, then passes that path to the manager. The picker handles choosing a file; the manager handles reading and checking its contents.
+The menu calls [main.py, `load_pcbs_from_input()`](../main.py). This function calls [file_picker.py, `choose_data_file()`](../file_picker.py) to select a path, then passes that path to the manager. The picker handles choosing a file; the manager handles reading and checking its contents.
 
 The picker lists `.txt` files directly inside the project's `data` folder, sorted alphabetically without treating uppercase and lowercase differently. Subfolders are excluded. A file appearing here does not mean its contents are valid; the regular validation still runs when it is selected.
 
@@ -181,7 +181,7 @@ The picker finds the project's `data` folder even when the program starts from a
 
 An empty, missing, or unreadable data folder still leaves manual entry and cancel available. If a selected file disappears or contains invalid data, the loader reports the error and keeps the current collection.
 
-[pcb_manager.py, `load_from_file()`](pcb_manager.py) handles the actual reading:
+[pcb_manager.py, `load_from_file()`](../pcb_manager.py) handles the actual reading:
 
 1. Creates a temporary manager to hold the incoming records.
 2. Opens the file using `with`, which closes it automatically afterward.
@@ -192,7 +192,7 @@ An empty, missing, or unreadable data folder still leaves manual entry and cance
 
 For example, `1 2000 0 4 3 1` means process ID 1, memory 2000, arrival time 0, CPU required 4, quantum 3, and context-switch penalty 1. Input files contain records only, without headings such as “Data Set 1.”
 
-The [replacement block](pcb_manager.py) runs only after the entire file succeeds. This prevents a bad record near the end of a file from leaving the current collection partly replaced. A successful load replaces the old set because the supplied datasets are separate sets whose IDs restart.
+The [replacement block](../pcb_manager.py) runs only after the entire file succeeds. This prevents a bad record near the end of a file from leaving the current collection partly replaced. A successful load replaces the old set because the supplied datasets are separate sets whose IDs restart.
 
 The loader returns the number of records for the success message. Invalid record errors include a line number. The interface catches `OSError` for file problems, including missing files, directories, and denied permissions. It also catches `ValueError` for invalid data. Files are read using UTF-8, matching the save method.
 
@@ -200,7 +200,7 @@ The loader returns the number of records for the success message. Invalid record
 
 Validation is divided between checks for one PCB and checks that need the whole collection.
 
-[pcb.py, `PCB.validate()`](pcb.py) checks the individual fields:
+[pcb.py, `PCB.validate()`](../pcb.py) checks the individual fields:
 
 | Field | Individual rule |
 | --- | --- |
@@ -213,7 +213,7 @@ Validation is divided between checks for one PCB and checks that need the whole 
 
 Process IDs do not have a positivity check because the supplied rules require an integer and uniqueness, without stating that IDs must be positive.
 
-[pcb_manager.py, `add_pcb()`](pcb_manager.py) first checks that the supplied item is a PCB. The loop over existing records rejects duplicate IDs. The following two blocks compare quantum and context-switch penalty with the first PCB. This means the first accepted PCB establishes those values for the set. The final `append()` runs only after these checks succeed.
+[pcb_manager.py, `add_pcb()`](../pcb_manager.py) first checks that the supplied item is a PCB. The loop over existing records rejects duplicate IDs. The following two blocks compare quantum and context-switch penalty with the first PCB. This means the first accepted PCB establishes those values for the set. The final `append()` runs only after these checks succeed.
 
 Both file loading and manual entry create a PCB and then use `add_pcb()`. This gives both entry methods the same validation rules. A failed check raises `ValueError`, which carries a message back to the interface for display.
 
@@ -221,15 +221,15 @@ Memory is stored and must be positive. The implementation does not enforce a tot
 
 ## Requirement 3 — Show the PCB list (25 pts)
 
-[main.py, `display_pcbs()`](main.py) gets the current list through [pcb_manager.py, `get_pcbs()`](pcb_manager.py). If the list is empty, it prints a message and returns.
+[main.py, `display_pcbs()`](../main.py) gets the current list through [pcb_manager.py, `get_pcbs()`](../pcb_manager.py). If the list is empty, it prints a message and returns.
 
 Otherwise, the function calls `cli_style.pcb_table()` to print all six fields. The style module controls headings and column widths. Large values widen the columns; a window too narrow for the table uses labeled fields for each record instead. The final `len(pcbs)` in `display_pcbs()` shows the total number of records.
 
-[pcb.py, `PCB.__str__()`](pcb.py) provides the readable record description shown before removal. The menu's table uses `display_pcbs()` instead.
+[pcb.py, `PCB.__str__()`](../pcb.py) provides the readable record description shown before removal. The menu's table uses `display_pcbs()` instead.
 
 ## Requirement 4 — Add a new PCB (25 pts)
 
-[main.py, `add_pcb_from_input()`](main.py) prompts for each of the six fields. Its first `try` block converts responses into integers. If conversion fails, it prints “All PCB fields must be integers” and returns to the menu.
+[main.py, `add_pcb_from_input()`](../main.py) prompts for each of the six fields. Its first `try` block converts responses into integers. If conversion fails, it prints “All PCB fields must be integers” and returns to the menu.
 
 The second `try` block creates the PCB and calls `manager.add_pcb(pcb)`. This checks the individual values, duplicate IDs, and shared quantum/penalty before adding the record. A validation error prints its message; a successful addition prints the process ID.
 
@@ -239,23 +239,23 @@ This function uses the same manager as file loading, so a loaded set can be exte
 
 Editing addresses the assignment's request to update active process information. Removal is an additional convenience for managing the current set.
 
-Both options use [main.py, `select_pcb_from_input()`](main.py) to show the current list and request a process ID. The ID identifies the process, rather than its position in the table. Unknown IDs and non-integer responses show errors and allow another attempt. An empty collection returns to the main menu without asking for an ID. **C** cancels selection.
+Both options use [main.py, `select_pcb_from_input()`](../main.py) to show the current list and request a process ID. The ID identifies the process, rather than its position in the table. Unknown IDs and non-integer responses show errors and allow another attempt. An empty collection returns to the main menu without asking for an ID. **C** cancels selection.
 
 ### Editing one field
 
-[main.py, `edit_pcb_from_input()`](main.py) shows six numbered fields with their current values. Select one field, then enter its new integer value. **C** cancels at either prompt. Blank input, `cat`, `_`, and decimal values are rejected and leave the value prompt open. Blank input does not mean zero or silently change the field.
+[main.py, `edit_pcb_from_input()`](../main.py) shows six numbered fields with their current values. Select one field, then enter its new integer value. **C** cancels at either prompt. Blank input, `cat`, `_`, and decimal values are rejected and leave the value prompt open. Blank input does not mean zero or silently change the field.
 
 The function copies the current six values into a dictionary and replaces only the selected value. `PCB(**values)` passes these named values into a new PCB, which runs the existing individual validation. The original object is not changed during this step.
 
-[pcb_manager.py, `update_pcb()`](pcb_manager.py) finds the original through `get_pcb()`, rechecks the replacement, and adds the other PCBs to a temporary manager. It then checks the replacement against those records using `add_pcb()`. Leaving the original out of this check allows its ID to stay the same, but another process's ID is still rejected. Only after all checks pass does the replacement take the original's position in the list.
+[pcb_manager.py, `update_pcb()`](../pcb_manager.py) finds the original through `get_pcb()`, rechecks the replacement, and adds the other PCBs to a temporary manager. It then checks the replacement against those records using `add_pcb()`. Leaving the original out of this check allows its ID to stay the same, but another process's ID is still rejected. Only after all checks pass does the replacement take the original's position in the list.
 
 Memory, CPU required, quantum, and penalty must remain positive; arrival time must remain nonnegative. Quantum and penalty must also match the other processes. When only one PCB remains, either shared value can change to any positive integer because there are no other PCBs to disagree with it. The next added PCB must match the new values. Invalid edits preserve the original record and allow another attempt.
 
 ### Removing a process
 
-[main.py, `remove_pcb_from_input()`](main.py) displays the selected PCB and asks for confirmation. Only **Y** or **yes** removes it. **N**, **no**, **C**, or Enter cancels; other responses ask again. Letter commands accept either case.
+[main.py, `remove_pcb_from_input()`](../main.py) displays the selected PCB and asks for confirmation. Only **Y** or **yes** removes it. **N**, **no**, **C**, or Enter cancels; other responses ask again. Letter commands accept either case.
 
-[pcb_manager.py, `remove_pcb()`](pcb_manager.py) finds the selected object with `get_pcb()` and removes it from the list. Other processes keep their IDs and order. A removed ID can be reused. Removing the last record leaves an empty collection, so the next PCB added establishes a new quantum and penalty.
+[pcb_manager.py, `remove_pcb()`](../pcb_manager.py) finds the selected object with `get_pcb()` and removes it from the list. Other processes keep their IDs and order. A removed ID can be reused. Removing the last record leaves an empty collection, so the next PCB added establishes a new quantum and penalty.
 
 ### Revising a previously saved collection
 
@@ -263,9 +263,9 @@ Load the saved file, edit or remove the desired records, and use **4. Save** wit
 
 ## Bonus Feature — Save and reload PCB data (+10 pts)
 
-Menu option 4 calls [main.py, `save_pcbs_from_input()`](main.py). This function asks for a filename, rejects a blank response, and calls the manager. If a file already exists, it shows the destination and current PCB count and asks whether to overwrite. Only **Y** or **yes** confirms; **N**, **no**, **C**, or Enter cancels without changing the file. Other responses ask again. Directories, missing folders, permission problems, and validation errors produce messages. Success is reported only after saving finishes.
+Menu option 4 calls [main.py, `save_pcbs_from_input()`](../main.py). This function asks for a filename, rejects a blank response, and calls the manager. If a file already exists, it shows the destination and current PCB count and asks whether to overwrite. Only **Y** or **yes** confirms; **N**, **no**, **C**, or Enter cancels without changing the file. Other responses ask again. Directories, missing folders, permission problems, and validation errors produce messages. Success is reported only after saving finishes.
 
-[pcb_manager.py, `save_to_file()`](pcb_manager.py) handles the file contents:
+[pcb_manager.py, `save_to_file()`](../pcb_manager.py) handles the file contents:
 
 1. Rechecks each PCB and uses a temporary manager to recheck collection rules. This matters because PCB values can be changed after creation.
 2. Builds one line per PCB in the same six-field order expected by the loader. Each line ends with a newline; no headings or debugging text are included.
@@ -285,21 +285,21 @@ Run the tests from the project folder:
 python3 -m unittest discover -s tests -v
 ```
 
-The Phase 1 suite contained **58 test methods**, listed below as the historical baseline. Running the command above in this Phase 2 project runs **87 tests**, including the retained Phase 1 coverage. The current counts are in the [overall verification table](PROJECT_DESCRIPTION.md#verification). Several methods use multiple cases to check each field or boundary value. Tests use temporary files for generated data and do not overwrite the supplied datasets.
+The Phase 1 suite contained **58 test methods**, listed below as the historical baseline. Running the command above in this Phase 2 project runs **87 tests**, including the retained Phase 1 coverage. The current counts are in the [overall verification table](../README.md#verification). Several methods use multiple cases to check each field or boundary value. Tests use temporary files for generated data and do not overwrite the supplied datasets.
 
 | Test file | Phase 1 methods | Coverage |
 | --- | ---: | --- |
-| [test_requirements.py](tests/test_requirements.py) | 12 | Exact sample records, replacement loading, field counts, integer conversion, numeric bounds, duplicate IDs, quantum/penalty consistency, manual addition, display, and failed-load preservation. |
-| [test_saving.py](tests/test_saving.py) | 17 | Save/reload round trips, exact format, overwrite confirmation/cancellation, fresh-process reload, empty lists, and file-error handling. |
-| [test_editing.py](tests/test_editing.py) | 12 | All editable fields, invalid changes, selection/cancellation, removal, and saving revised collections. |
-| [test_file_picker.py](tests/test_file_picker.py) | 10 | Filtering/sorting, page boundaries, navigation, manual paths, cancellation, and file/folder errors. |
-| [test_cli_style.py](tests/test_cli_style.py) | 7 | Color controls, plain output, screen clearing, result feedback, pauses, and narrow tables. |
+| [test_requirements.py](../tests/test_requirements.py) | 12 | Exact sample records, replacement loading, field counts, integer conversion, numeric bounds, duplicate IDs, quantum/penalty consistency, manual addition, display, and failed-load preservation. |
+| [test_saving.py](../tests/test_saving.py) | 17 | Save/reload round trips, exact format, overwrite confirmation/cancellation, fresh-process reload, empty lists, and file-error handling. |
+| [test_editing.py](../tests/test_editing.py) | 12 | All editable fields, invalid changes, selection/cancellation, removal, and saving revised collections. |
+| [test_file_picker.py](../tests/test_file_picker.py) | 10 | Filtering/sorting, page boundaries, navigation, manual paths, cancellation, and file/folder errors. |
+| [test_cli_style.py](../tests/test_cli_style.py) | 7 | Color controls, plain output, screen clearing, result feedback, pauses, and narrow tables. |
 
 Permission, disk-write, and replacement failures are simulated where needed so these cases can be checked without changing real permissions or filling a disk. The overwrite round-trip test starts a fresh Python process to confirm that edited and added records are read from the saved file.
 
 ## Central CLI style and screen flow
 
-[cli_style.py](cli_style.py) controls the appearance for both the main menu and the file picker. `PROJECT_TITLE`, `COLORS`, `PCB_COLUMNS`, and `CLEAR_SCREENS` are the main settings to change when adjusting the interface. No extra packages are required.
+[cli_style.py](../cli_style.py) controls the appearance for both the main menu and the file picker. `PROJECT_TITLE`, `COLORS`, `PCB_COLUMNS`, and `CLEAR_SCREENS` are the main settings to change when adjusting the interface. No extra packages are required.
 
 | Style | Used for |
 | --- | --- |

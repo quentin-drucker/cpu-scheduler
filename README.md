@@ -1,14 +1,14 @@
 # COM326 — Process Manager and CPU Scheduler
 
-[Phase 1 walkthrough](PHASE1_DESCRIPTION.md) | [Phase 2 walkthrough](PHASE2_DESCRIPTION.md) | [Test evidence](evidence/phase2/README.md)
+[Phase 1 walkthrough](docs/PHASE1_DESCRIPTION.md) | [Phase 2 walkthrough](docs/PHASE2_DESCRIPTION.md) | [Phase 3 walkthrough](docs/PHASE3_DESCRIPTION.md) | [Phase 2 test evidence](docs/evidence/phase2/README.md)
 
-This project keeps process records and calculates how a single CPU would run them. Phase 1 provides the process manager. Phase 2 adds First-Come, First-Served (FCFS) and Shortest-Job-First (SJF) scheduling. It is a simulation: it calculates clock times rather than launching real operating-system processes.
+This project keeps process records and calculates how a single CPU would run them. Phase 1 provides the process manager. Phase 2 adds First-Come, First-Served (FCFS) and Shortest-Job-First (SJF) scheduling. Phase 3, in progress, adds Round-Robin scheduling with a time quantum and context-switch penalties. It is a simulation: it calculates clock times rather than launching real operating-system processes.
 
 Both phases are implemented in one application. All **87 automated tests pass**, including the original Phase 1 coverage. The official Phase 2 data produces average turnaround times of **4.40 cycles for FCFS** and **4.20 cycles for SJF**. The separate phase guides explain which work belongs to each phase.
 
 ## Start here
 
-Extract the project ZIP and open a terminal in the folder containing `main.py`. Run:
+Clone the repository (or extract the project ZIP) and open a terminal in the folder containing `main.py`. Run:
 
 ```bash
 python3 main.py
@@ -68,7 +68,7 @@ Use a fresh copy name if `my_phase2_copy.txt` already exists. Do not overwrite t
 | Scheduling | No simulated execution. | FCFS and SJF, idle gaps, start/finish times, turnaround, and average turnaround. |
 | Verification | 58 original tests and three supplied datasets. | 29 additional tests, the revised official dataset, and three small demonstration datasets. |
 
-The [Phase 1 guide](PHASE1_DESCRIPTION.md) explains the retained process-management features and labels the original menu and test counts as historical. Its code links open the current files. The [Phase 2 guide](PHASE2_DESCRIPTION.md) identifies new functions and explains their calculations with examples.
+The [Phase 1 guide](docs/PHASE1_DESCRIPTION.md) explains the retained process-management features and labels the original menu and test counts as historical. Its code links open the current files. The [Phase 2 guide](docs/PHASE2_DESCRIPTION.md) identifies new functions and explains their calculations with examples.
 
 ## How the files fit together
 
@@ -104,13 +104,13 @@ The first line above explains the fields; actual loadable files contain only the
 
 Loading and editing validate a candidate set before replacing the original. Saving rechecks the data, writes the same six fields, and requires confirmation before replacing an existing file. The existing detailed explanations are in the Phase 1 guide.
 
-For Phase 2, **non-preemptive** means that a selected process finishes before another starts. Quantum does not split its CPU time, and context-switch penalties add no time. FCFS uses arrival order. SJF chooses the shortest job that has already arrived. Ties use the documented [Phase 2 rules](PHASE2_DESCRIPTION.md#choosing-the-next-process).
+For Phase 2, **non-preemptive** means that a selected process finishes before another starts. Quantum does not split its CPU time, and context-switch penalties add no time. FCFS uses arrival order. SJF chooses the shortest job that has already arrived. Ties use the documented [Phase 2 rules](docs/PHASE2_DESCRIPTION.md#choosing-the-next-process).
 
 ## Terminal behavior
 
 The schedule shows execution order, ID, arrival, CPU required, start, finish, and turnaround, followed by the average. Times are CPU clock cycles. Narrow terminals use labeled records instead of wrapping table columns.
 
-The Phase 2 guide also includes [worked Gantt charts and calculations](PHASE2_DESCRIPTION.md#worked-scheduling-timelines-and-performance-measures) for both algorithms, with explanations of waiting time and throughput alongside the required turnaround measures.
+The Phase 2 guide also includes [worked Gantt charts and calculations](docs/PHASE2_DESCRIPTION.md#worked-scheduling-timelines-and-performance-measures) for both algorithms, with explanations of waiting time and throughput alongside the required turnaround measures.
 
 The normal interface pauses after an action so the result can be read. Colors require both input and output to be connected to a terminal, `TERM` not to be `dumb`, and `NO_COLOR` to be unset. Use `NO_COLOR=1 python3 main.py` to disable colors. Redirected input or output disables colors, screen clearing, and extra pauses. Setting `CLEAR_SCREENS = False` in `cli_style.py` retains earlier screens. Very narrow terminals can still wrap longer explanation sentences; the result fields remain present.
 
@@ -135,48 +135,15 @@ The completed implementation passes **87 test methods**:
 | `test_scheduler.py` | 14 | Exact schedules, arrivals, ties, idle time, non-preemption, repeatability, and unchanged records. |
 | `test_scheduling_ui.py` | 7 | Algorithm selection, current-data changes, full menu runs, and pause/result feedback. |
 
-Real interactive checks cover the official runs, result pauses, unchanged View data, and narrow/no-color output. [Captured CLI evidence](evidence/phase2/README.md) records actual program output and explains how to reproduce it. See the Phase 2 guide for the official calculations and demonstration steps.
+Real interactive checks cover the official runs, result pauses, unchanged View data, and narrow/no-color output. [Captured CLI evidence](docs/evidence/phase2/README.md) records actual program output and explains how to reproduce it. See the Phase 2 guide for the official calculations and demonstration steps.
 
-## Assignment sources and submission
+## Repository layout
 
-The current specification and revised handout are local:
-
-- [Phase 2 instructions](Assignment%20Specifications%20for%20Phase%202/Instructions%20-%20Project%20Phase%202.pdf)
-- [Revised official test-data handout](Assignment%20Specifications%20for%20Phase%202/From%20moodle%20-%20Project%20Phase%202%20Official%20Test%20Data%20File.txt)
-
-The application follows the handout's rules: matching quantum values, non-preemptive algorithms, ignored switch penalties, and plenty of memory.
-
-The [evidence index](evidence/phase2/README.md#screenshot-checklist) lists the 16 captured terminal screenshots. Their completed report includes actions, expected results, and observed results. The worked charts explain the calculations; the screenshots document actual application runs.
-
-The intended outer submission ZIP has four deliverables, following the Phase 1 submission structure:
-
-1. **Coversheet List Of Contributors.pdf:** the standalone author/contributor statement.
-2. **QD_Phase 2/** or **QD_Phase 2.zip:** the complete runnable project, with the contents listed below. Preserve the folder structure so data files, tests, and documentation links work after extraction.
-3. **Visual Showcase and Documentation/**: the completed `Phase 2 Screenshot Documentation Report.pdf` and a `Screenshots/` folder containing the actual captures. The report labels each figure and explains its input, expected result, observed result, and purpose.
-4. **Phase 2 Project Overview.pdf:** the standalone explanation of the PCB, main data structures, architecture, and scheduling implementation.
-
-The screenshot report is complete in both Word and PDF form. Keep editable Word files as working copies and use the final PDFs for submission. The standalone coversheet belongs outside the runnable project; omit its working Markdown copy, `PHASE2_COVERSHEET.md`, from the code package. Screenshot images and their report belong together in `Visual Showcase and Documentation/` and need not be duplicated inside the code package.
-
-### Recommended code-package contents
-
-| Include | Reason |
+| Path | Contents |
 | --- | --- |
-| All seven application files: `main.py`, `pcb.py`, `pcb_manager.py`, `scheduler.py`, `cli_style.py`, `file_picker.py`, and `data_paths.py` | These files work together to run the application. |
-| `PROJECT_DESCRIPTION.md`, `PHASE1_DESCRIPTION.md`, and `PHASE2_DESCRIPTION.md` | Startup instructions, the retained Phase 1 features, and the Phase 2 explanation. |
-| `tests/` containing the eight `test_*.py` files | Lets the reader rerun the 87 automated tests. Omit its cache folder. |
-| `data/` containing the nine files listed below | Supplies the test inputs and documented examples. |
-| `docs/phase2-scheduling-gantt.svg` | The Phase 2 guide embeds and links to this worked chart. |
-| `evidence/phase2/` | Contains the linked test explanations, text transcripts, replay inputs, and saved-data example. It supplements the separate screenshot report. |
-| Both `Assignment Specifications for Phase 1/` and `Assignment Specifications for Phase 2/`, each with its PDF and test-data TXT file | Keeps the original requirements and data references available through the guides' links. These are reference materials, not runtime dependencies. |
+| `*.py` | The application (see [How the files fit together](#how-the-files-fit-together)). |
+| `data/` | Loadable process datasets used by the tests and walkthroughs. |
+| `tests/` | The automated `unittest` suite. |
+| `docs/` | The per-phase walkthroughs, the Phase 2 Gantt chart, and the Phase 2 evidence transcripts. |
 
-Keep these files in `data/`:
-
-- `dataset1.txt`, `dataset2.txt`, and `dataset3.txt`: the original Phase 1 sets, also used by automated tests.
-- `invalid_data_test.txt`: the deliberately malformed file described in the Phase 1 guide.
-- `phase2_official.txt`: the unchanged numeric records from the Phase 2 handout.
-- `phase2_idle.txt`, `phase2_nonpreemptive.txt`, and `phase2_ties.txt`: the additional scheduling cases used by tests and evidence.
-- `phase2_submission_demo.txt`: the saved result of the screenshot editing demonstration, with process 0's CPU requirement changed to 1.
-
-The older saved examples `phase1_demo.txt`, `phase1_demo2.txt`, `saved_processes.txt`, `saved_processes2.txt`, and `test2.txt` can be left out of the submission copy. The automated tests and documented Phase 2 runs do not load them. Earlier captures may show them in the file picker; the picker numbers can change when files are omitted, so the walkthroughs select files by name.
-
-Leave `phase2_plan.md`, `PHASE2_COVERSHEET.md`, and the duplicate `screenshots/` folder out of the code package. Also exclude all `__pycache__/` folders, `.pyc` files, `.DS_Store` files, `__MACOSX/` folders, Word lock files whose names begin with `~$`, and temporary placeholder notes. Python recreates its cache files when needed; they are not part of the source. Apply these exclusions to the submission copy while keeping any useful working materials in the development folder.
+The Moodle assignment handouts are kept locally in `Assignment Specifications for Phase N/` folders and are excluded by `.gitignore`. The tests do not need them.
