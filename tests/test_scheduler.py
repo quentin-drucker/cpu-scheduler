@@ -50,7 +50,7 @@ class SchedulerTests(unittest.TestCase):
     def test_official_file_matches_revised_handout(self):
         expected = "0 2000 0 2 3 1\n1 4000 1 2 3 1\n2 12000 2 1 3 1\n3 500 3 3 3 1\n4 500 3 4 3 1\n"
         self.assertEqual((ROOT / "data/phase2_official.txt").read_text(), expected)
-        handout = (ROOT / "Assignment Specifications for Phase 2" /
+        handout = (ROOT / "Assignment Specifications" / "Assignment Specifications for Phase 2" /
                    "From moodle - Project Phase 2 Official Test Data File.txt")
         # The handout folder is gitignored, so a fresh clone may not have it.
         if handout.exists():

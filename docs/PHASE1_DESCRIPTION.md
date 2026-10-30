@@ -41,7 +41,7 @@ At a high level, `main.py` handles user interaction, while `PCBManager` keeps a 
 | [data/dataset1.txt](../data/dataset1.txt), [dataset2.txt](../data/dataset2.txt), [dataset3.txt](../data/dataset3.txt) | Hold the three separate sample process sets, with 4, 5, and 7 records. |
 | [data/invalid_data_test.txt](../data/invalid_data_test.txt) | Provides a malformed record for testing the field-count check. |
 
-The assignment is *Instructions - Project Phase 1.pdf*, and the field rules and original sample sets are in the supplied Moodle data document. Both are kept locally in `Assignment Specifications for Phase 1/`, which is not published to the repository.
+The assignment is *Instructions - Project Phase 1.pdf*, and the field rules and original sample sets are in the supplied Moodle data document. Both are kept locally in `Assignment Specifications/Assignment Specifications for Phase 1/`, which is not published to the repository.
 
 Source links below open the relevant files. Function names identify the code to look for without depending on line numbers that change when comments are added.
 

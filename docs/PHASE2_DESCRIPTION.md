@@ -19,7 +19,7 @@ A useful self-check is being able to explain why a process cannot start before a
 
 ## Requirements and scheduling rules
 
-The assignment PDF awards 20 points for building on Phase 1, 20 for the result display, and 30 each for FCFS and SJF. The official test-data handout specifies these rules (both handouts are kept locally in `Assignment Specifications for Phase 2/`, which is not published to the repository):
+The assignment PDF awards 20 points for building on Phase 1, 20 for the result display, and 30 each for FCFS and SJF. The official test-data handout specifies these rules (both handouts are kept locally in `Assignment Specifications/Assignment Specifications for Phase 2/`, which is not published to the repository):
 
 - The algorithms are **non-preemptive**: once a process starts, it runs until it finishes. A shorter process arriving meanwhile waits.
 - Ignore context-switch penalties in Phase 2. Moving from one process to the next adds no extra time.
@@ -314,7 +314,7 @@ The [test evidence guide](evidence/phase2/README.md) provides the inputs, expect
 
 > This section records how the Phase 2 submission ZIP was packaged. Its paths describe that ZIP, not the current repository layout.
 
-The Phase 2 instructions and revised official test-data handout are kept locally in `Assignment Specifications for Phase 2/`, which is not published to the repository.
+The Phase 2 instructions and revised official test-data handout are kept locally in `Assignment Specifications/Assignment Specifications for Phase 2/`, which is not published to the repository.
 
 The application follows the handout's rules: matching quantum values, non-preemptive algorithms, ignored switch penalties, and plenty of memory.
 

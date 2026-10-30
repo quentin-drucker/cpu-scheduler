@@ -146,4 +146,4 @@ Real interactive checks cover the official runs, result pauses, unchanged View d
 | `tests/` | The automated `unittest` suite. |
 | `docs/` | The per-phase walkthroughs, the Phase 2 Gantt chart, and the Phase 2 evidence transcripts. |
 
-The Moodle assignment handouts are kept locally in `Assignment Specifications for Phase N/` folders and are excluded by `.gitignore`. The tests do not need them.
+The Moodle assignment handouts are kept locally in the `Assignment Specifications/` folder (one subfolder per phase) and are excluded by `.gitignore`. The tests do not need them.
