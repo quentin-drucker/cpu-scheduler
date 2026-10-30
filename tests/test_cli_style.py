@@ -1,12 +1,23 @@
 import io
 import os
 from contextlib import redirect_stdout
+from pathlib import Path
 import unittest
 from unittest.mock import patch
 
 import cli_style as ui
 from main import main
 from pcb import PCB
+from pcb_manager import PCBManager
+from scheduler import schedule_fcfs, schedule_rr
+
+
+ROOT = Path(__file__).resolve().parents[1]
+# The official Phase 3 Round-Robin run (quantum 3) at the 78-column cap.
+OFFICIAL_78 = [
+    "0 CS 1 P0 4 CS 5 P1 8 CS 9 P2 10 CS 11 P3 14 CS 15 P4 18 CS 19 P5 22",
+    "22 CS 23 P0 26 CS 27 P1 30 CS 31 P4 32 CS 33 P5 34 CS 35 P0 37 CS 38 P1 40",
+]
 
 
 class StyleTests(unittest.TestCase):
@@ -68,38 +79,77 @@ class StyleTests(unittest.TestCase):
                      "Quantum: 3", "CS Penalty: 1"]:
             self.assertIn(text, output.getvalue())
 
-    def test_schedule_table_wide_and_narrow_keep_all_values(self):
-        # Distinct numbers make swapped or missing fields easy to notice.
-        result = {"process_id": 90, "arrival_time": 3, "cpu_required": 5,
-                  "start_time": 8, "finish_time": 13, "turnaround_time": 10}
-        for width in [100, 35]:
-            with self.subTest(width=width):
-                with patch("cli_style.shutil.get_terminal_size",
-                           return_value=os.terminal_size((width, 30))):
-                    with redirect_stdout(io.StringIO()) as output:
-                        ui.schedule_table([result])
-                text = output.getvalue()
-                self.assertNotIn("\033", text)
-                if width == 100:
-                    self.assertIn("Order", text)
-                    row = next(line for line in text.splitlines() if line.startswith("1 "))
-                    self.assertEqual(row.split(), ["1", "90", "3", "5", "8", "13", "10"])
-                else:
-                    for field in ["Order: 1", "ID: 90", "Arrival: 3", "CPU Required: 5",
-                                  "Start: 8", "Finish: 13", "Turnaround: 10"]:
-                        self.assertIn(field, text)
-
-    def test_schedule_table_large_values_trigger_vertical_fallback(self):
-        result = {"process_id": 12345678901234567890, "arrival_time": 1000000000,
-                  "cpu_required": 1, "start_time": 1000000000,
-                  "finish_time": 1000000001, "turnaround_time": 1}
+    def render(self, function, argument, width):
+        # Fix the terminal width so wrapping and fallbacks are predictable.
         with patch("cli_style.shutil.get_terminal_size",
-                   return_value=os.terminal_size((80, 30))):
+                   return_value=os.terminal_size((width, 30))):
             with redirect_stdout(io.StringIO()) as output:
-                ui.schedule_table([result])
-        self.assertIn("ID: 12345678901234567890", output.getvalue())
-        self.assertIn("Finish: 1000000001", output.getvalue())
+                function(argument)
+        return output.getvalue()
 
+    def official_rr(self):
+        manager = PCBManager()
+        manager.load_from_file(ROOT / "data/phase3_official.txt")
+        return schedule_rr(manager.get_pcbs(), 3)
+
+    def test_timeline_caps_width_at_78(self):
+        slices = self.official_rr()["slices"]
+        self.assertEqual(self.render(ui.timeline, slices, 500).splitlines(), OFFICIAL_78)
+        self.assertEqual(self.render(ui.timeline, slices, 78).splitlines(), OFFICIAL_78)
+
+    def test_timeline_marks_idle_and_continuing_slices(self):
+        manager = PCBManager()
+        manager.load_from_file(ROOT / "data/phase2_idle.txt")
+        text = self.render(ui.timeline, schedule_fcfs(manager.get_pcbs())["slices"], 78)
+        self.assertEqual(text, "0 idle 5 CS 6 P1 8 idle 12 CS 13 P2 14\n")
+        lone = schedule_rr([PCB(1, 1, 0, 7, 3, 1)], 3)["slices"]
+        self.assertEqual(self.render(ui.timeline, lone, 78), "0 CS 1 P1 4 P1 7 P1 8\n")
+
+    def test_timeline_wraps_between_whole_slices(self):
+        slices = self.official_rr()["slices"]
+        self.assertEqual(self.render(ui.timeline, slices, 30).splitlines(), [
+            "0 CS 1 P0 4 CS 5 P1 8",
+            "8 CS 9 P2 10 CS 11 P3 14",
+            "14 CS 15 P4 18 CS 19 P5 22",
+            "22 CS 23 P0 26 CS 27 P1 30",
+            "30 CS 31 P4 32 CS 33 P5 34",
+            "34 CS 35 P0 37 CS 38 P1 40",
+        ])
+        self.assertEqual(self.render(ui.timeline, slices, 78).splitlines(), OFFICIAL_78)
+
+        odd = schedule_rr([PCB(-3, 1, 0, 4, 3, 1), PCB(1000, 1, 0, 4, 3, 1)], 1)
+        text = self.render(ui.timeline, odd["slices"], 30)
+        tokens = text.split()
+        self.assertIn("P-3", tokens)
+        self.assertIn("P1000", tokens)
+        self.assertNotIn("\033", text)
+        for line in text.splitlines():
+            self.assertFalse(line.endswith("CS"))
+            self.assertLessEqual(len(line), 30)
+
+    def test_results_table_sideways_and_fallback(self):
+        rows = self.official_rr()["processes"]
+        text = self.render(ui.results_table, rows, 100)
+        lines = [line.split() for line in text.splitlines()]
+        for expected in [["Process", "0", "1", "2", "3", "4", "5"],
+                         ["Arrival", "0", "1", "2", "3", "3", "4"],
+                         ["CPU", "8", "8", "1", "3", "4", "4"],
+                         ["Completion", "37", "40", "10", "14", "32", "34"],
+                         ["Turnaround", "37", "39", "8", "11", "29", "30"]]:
+            self.assertIn(expected, lines)
+        self.assertNotIn("\033", text)
+
+        many = schedule_fcfs([PCB(i, 1, 0, 1, 3, 1) for i in range(30)])["processes"]
+        text = self.render(ui.results_table, many, 100)
+        lines = [line.split() for line in text.splitlines()]
+        self.assertIn(["ID", "Arrival", "CPU", "Completion", "Turnaround"], lines)
+        self.assertEqual(sum(1 for line in lines if len(line) == 5 and line[0].isdigit()), 30)
+        self.assertNotIn("\033", text)
+
+        text = self.render(ui.results_table, rows, 20)
+        self.assertIn("Turnaround: 37", text)
+        self.assertIn("Completion: 40", text)
+        self.assertNotIn("\033", text)
 
 if __name__ == "__main__":
     unittest.main()

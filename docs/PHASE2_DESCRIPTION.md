@@ -2,6 +2,8 @@
 
 [Overall project](../README.md) | [Phase 1 baseline](PHASE1_DESCRIPTION.md) | [Test evidence](evidence/phase2/README.md)
 
+> **Note (Phase 3):** this guide describes Phase 2 as submitted. The 4.40 and 4.20 averages ignore the context-switch penalty, as Phase 2 required. Phase 3 adds the penalty to FCFS and SJF, so the same data now gives **7.40** and **7.20**. Phase 3 also replaced `schedule_table()` with `timeline()` and `results_table()`. See the [Phase 3 guide](PHASE3_DESCRIPTION.md).
+
 Phase 2 adds a CPU scheduler to the existing process manager. The scheduler answers two questions: which process gets the CPU next, and when will it finish? It calculates a schedule using the current records, then shows the execution order, start, finish, turnaround, and average turnaround.
 
 The application is implemented and all **87 tests pass**. Official FCFS and SJF averages are **4.40** and **4.20** cycles. The original process-management features remain available. Execution transcripts, test explanations, and the completed 16-figure screenshot index are in [evidence/phase2](evidence/phase2/README.md).

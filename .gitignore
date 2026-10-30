@@ -1,6 +1,9 @@
 # Course handouts from Moodle (kept locally, not published)
 Assignment Specifications/
 
+# Local planning notes (kept locally, not published)
+plans/
+
 # Python
 __pycache__/
 *.pyc

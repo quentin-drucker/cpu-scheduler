@@ -28,6 +28,11 @@ class PCB:
         self.quantum = quantum
         self.context_switch_penalty = context_switch_penalty
 
+        # Runtime state for the scheduler: the CPU time this process still needs.
+        # It starts at the full requirement. It is not one of the six saved
+        # fields, so it is never written to a file, shown in View, or validated.
+        self.remaining_time = cpu_required
+
         # An invalid record should be rejected at creation, not stored for later.
         self.validate()
 

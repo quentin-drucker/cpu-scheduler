@@ -4,7 +4,7 @@ from pcb import PCB
 from pcb_manager import PCBManager
 from file_picker import choose_data_file
 from data_paths import resolve_data_path
-from scheduler import schedule_fcfs, schedule_sjf, average_turnaround
+from scheduler import schedule_fcfs, schedule_sjf, schedule_rr, average_turnaround
 import cli_style as ui
 
 
@@ -257,8 +257,29 @@ def remove_pcb_from_input(manager):
         ui.message("Error: Enter Y to remove, or N to cancel.", "error")
 
 
+def ask_quantum(default):
+    """Asks for this run's quantum; returns None if the user cancels."""
+
+    # The data file's quantum is the default. A typed value only applies to
+    # this run, so the saved records never change.
+    while True:
+        text = ui.ask(f"Time quantum in cycles (Enter for {default} from the data file, "
+                      "C to cancel): ").strip()
+        if text == "":
+            return default
+        if text.upper() == "C":
+            return None
+        try:
+            quantum = int(text)
+        except ValueError:
+            quantum = 0     # not a whole number, so reject it below
+        if quantum > 0:
+            return quantum
+        ui.message("Error: Quantum must be a whole number greater than 0.", "error")
+
+
 def run_scheduler_from_input(manager):
-    """Chooses a Phase 2 algorithm and shows its results for the current set."""
+    """Chooses FCFS, SJF or Round-Robin and shows its results for the current set."""
 
     # Read the current collection each time. An edit, addition, removal, or
     # new file load must be reflected in the very next scheduling run.
@@ -271,36 +292,55 @@ def run_scheduler_from_input(manager):
     ui.heading("\nRun CPU Scheduler")
     ui.option("1", "First-Come, First-Served (FCFS)")
     ui.option("2", "Shortest-Job-First (SJF)")
+    ui.option("3", "Round-Robin (RR)")
     ui.option("C", "Cancel", "warning")
 
     while True:
-        choice = ui.ask("Choose an algorithm (1, 2, or C): ").strip().upper()
+        choice = ui.ask("Choose an algorithm (1, 2, 3, or C): ").strip().upper()
         if choice == "C":
             ui.message("Scheduling cancelled.", "warning")
             return
         if choice == "1":
-            algorithm = "FCFS"
-            results = schedule_fcfs(pcbs)
+            name = "FCFS"
+            schedule = schedule_fcfs(pcbs)
             break
         if choice == "2":
-            algorithm = "SJF"
-            results = schedule_sjf(pcbs)
+            name = "SJF"
+            schedule = schedule_sjf(pcbs)
             break
-        ui.message("Error: Choose 1, 2, or C.", "error")
+        if choice == "3":
+            # Every PCB shares one quantum, so the first record supplies the default.
+            quantum = ask_quantum(pcbs[0].quantum)
+            if quantum is None:
+                ui.message("Scheduling cancelled.", "warning")
+                return
+            name = "Round-Robin"
+            schedule = schedule_rr(pcbs, quantum)
+            break
+        ui.message("Error: Choose 1, 2, 3, or C.", "error")
 
     # Calculations stay in scheduler.py; the menu supplies the explanation,
-    # and cli_style.py handles spacing. All times are simulated clock cycles.
-    ui.heading(f"\n{algorithm} Schedule")
-    print("Jobs run to completion; context-switch penalties are ignored.")
-    print("All times are in CPU clock cycles. Turnaround = Finish - Arrival.")
-    ui.schedule_table(results)
-    average = average_turnaround(results)
+    # and cli_style.py handles layout. All times are simulated clock cycles.
+    penalty = schedule["penalty"]
+    switches = schedule["context_switches"]
+    ui.heading(f"\n{name} Schedule")
+    print(f"Context-switch penalty: {penalty} cycle(s) before each process starts or resumes.")
+    if schedule["quantum"] is not None:
+        print(f"Time quantum: {schedule['quantum']} cycles.")
+    print("Timeline in CPU clock cycles (CS = context-switch penalty):")
+    ui.timeline(schedule["slices"])
+    ui.results_table(schedule["processes"])
+    average = average_turnaround(schedule["processes"])
     print(f"Average Turnaround Time: {average:.2f} cycles")
+    # Every penalty paid counts as a switch, so count x penalty is the time they add.
+    print(f"Context switches: {switches} ({switches} x {penalty} = {switches * penalty} "
+          "penalty cycles, including the first start)")
 
     # The main loop remembers this result and supplies the usual Enter pause.
     # Scheduling does not save or change any of the original process records.
-    ui.message(f"{algorithm} completed for {len(results)} processes. "
-               f"Average turnaround: {average:.2f} cycles.", "success")
+    ui.message(f"{name} completed for {len(schedule['processes'])} processes. "
+               f"Average turnaround: {average:.2f} cycles. "
+               f"Context switches: {switches}.", "success")
 
 
 def display_menu():

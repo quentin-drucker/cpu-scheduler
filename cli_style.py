@@ -7,7 +7,7 @@ import textwrap
 
 
 # Theme settings live here so the screens keep the same appearance.
-PROJECT_TITLE = "\n\n\nCOM326 | PROJECT PHASE 2"
+PROJECT_TITLE = "\n\n\nCOM326 | PROJECT PHASE 3"
 # These are terminal color codes. The leading 1 requests bold text.
 # This dictionary looks up a color-code string by a readable name such as "error".
 COLORS = {
@@ -111,22 +111,79 @@ def pcb_table(pcbs):
     rule()
 
 
-def schedule_table(results):
-    """Shows Phase 2 execution order and timing, including in a narrow window."""
+# The per-process result values, in display order, with their short labels.
+RESULT_COLUMNS = [
+    ("process_id", "ID"), ("arrival_time", "Arrival"), ("cpu_required", "CPU"),
+    ("completion_time", "Completion"), ("turnaround_time", "Turnaround")
+]
 
-    # Result dictionaries use names for their values, just as PCB objects do.
-    # These pairs keep the display order separate from the scheduling rules.
-    columns = [
-        ("process_id", "ID"), ("arrival_time", "Arrival"),
-        ("cpu_required", "CPU Required"), ("start_time", "Start"),
-        ("finish_time", "Finish"), ("turnaround_time", "Turnaround")
-    ]
-    labels = ["Order"] + [label for name, label in columns]
-    rows = []
-    for order, result in enumerate(results, start=1):
-        # The order is this result's position in the run, not its process ID.
-        # These are display strings; nothing is added to the saved PCB data.
-        rows.append([str(order)] + [str(result[name]) for name, label in columns])
+
+def timeline(slices):
+    """Prints the run as one wrapped line of times: 0 CS 1 P0 4 CS 5 P1 8 ..."""
+
+    # Only this function knows the timeline layout, so it can be swapped for
+    # a different display later without touching the scheduler or the menu.
+    # Each unit is one slice: an idle gap if the CPU waited, the penalty if
+    # one was paid, then the process and the time it stopped.
+    units = []
+    last = 0
+    for piece in slices:
+        first_moment = piece["start_time"] if piece["switch_start"] is None else piece["switch_start"]
+        unit = ""
+        if first_moment > last:
+            unit += f" idle {first_moment}"
+        if piece["switch_start"] is not None:
+            unit += f" CS {piece['start_time']}"
+        unit += f" P{piece['process_id']} {piece['finish_time']}"
+        units.append((unit, piece["finish_time"]))
+        last = piece["finish_time"]
+
+    # Break lines only between whole units, so a CS always stays with its run.
+    # A new line repeats the last time printed so the reader keeps their place.
+    width = min(78, shutil.get_terminal_size().columns)
+    line, has_unit, last = "0", False, 0
+    for unit, finish in units:
+        if has_unit and len(line) + len(unit) > width:
+            print(line)
+            line = str(last)
+        line += unit
+        has_unit, last = True, finish
+    # Plain text on purpose: the timeline is ASCII only, with no color codes.
+    print(line)
+
+
+def results_table(processes):
+    """Shows each process's results sideways: one column per process."""
+
+    # Sideways keeps a handful of processes compact; each row is one value.
+    labels = ["Process"] + [label for name, label in RESULT_COLUMNS[1:]]
+    rows = [[str(row[name]) for row in processes] for name, label in RESULT_COLUMNS]
+    label_width = len("Turnaround") + 2
+    # Every process column has the same width, set by the longest value.
+    column = max((len(value) for row in rows for value in row), default=0) + 2
+
+    if label_width + column * len(processes) > shutil.get_terminal_size().columns:
+        # Too many processes to fit sideways: use one row per process instead.
+        _upright_results(processes)
+        return
+
+    for index, (label, row) in enumerate(zip(labels, rows)):
+        # The > formatting right-aligns numbers so their digits line up.
+        values = "".join(f"{value:>{column}}" for value in row)
+        if index == 0:
+            print(styled(f"{label:<{label_width}}{values}", "heading"))
+            rule()
+        else:
+            print(f"{styled(f'{label:<{label_width}}', 'heading')}{values}")
+    rule()
+
+
+def _upright_results(processes):
+    """Shows one row per process, or labeled records in a narrow window."""
+
+    labels = [label for name, label in RESULT_COLUMNS]
+    # These are display strings; nothing is added to the saved PCB data.
+    rows = [[str(row[name]) for name, label in RESULT_COLUMNS] for row in processes]
 
     # Include the headings and largest values when finding each column width.
     # This also handles long process IDs and large clock values.

@@ -28,7 +28,8 @@ class EditingTests(unittest.TestCase):
         self.run_prompt(edit_pcb_from_input, ["1", "4", "4"])
         self.assertEqual(vars(self.manager.get_pcb(1)), {
             "process_id": 1, "memory": 2000, "arrival_time": 0,
-            "cpu_required": 4, "quantum": 3, "context_switch_penalty": 1
+            "cpu_required": 4, "quantum": 3, "context_switch_penalty": 1,
+            "remaining_time": 4
         })
         self.assertIs(self.manager.get_pcbs()[1], other)
 
