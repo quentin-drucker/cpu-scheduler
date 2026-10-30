@@ -1,0 +1,9 @@
+# Course handouts from Moodle (kept locally, not published)
+Assignment Specifications for Phase */
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store
