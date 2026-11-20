@@ -1,6 +1,6 @@
 # Phase 3 — Round-Robin Scheduling and Context-Switch Penalties
 
-[Overall project](../README.md) | [Phase 1 baseline](PHASE1_DESCRIPTION.md) | [Phase 2 scheduling](PHASE2_DESCRIPTION.md)
+[Overall project](../README.md) | [Phase 1 baseline](PHASE1_DESCRIPTION.md) | [Phase 2 scheduling](PHASE2_DESCRIPTION.md) | [Phase 4 memory](PHASE4_DESCRIPTION.md)
 
 Phase 3 adds Round-Robin (RR) scheduling with an adjustable time quantum. It also applies and counts the context-switch penalty in all three algorithms: FCFS, SJF and RR. Everything from Phases 1 and 2 still works. All **100 tests pass**.
 
@@ -169,6 +169,8 @@ Run `python3 -m unittest discover -s tests -v`. All 100 tests pass.
 | Records unchanged | Running any algorithm leaves the PCB objects, their order, `remaining_time` and the saved file exactly as they were. |
 | Display ([test_cli_style.py](../tests/test_cli_style.py)) | The timeline matches the official run, wraps only between whole slices at widths 30 and 78, shows `idle` and continuing slices, and keeps IDs like `P-3` and `P1000` intact. The results table falls back to rows, then to labeled records, when it does not fit. |
 | Menu integration | The three choices show the exact headings, penalty line, timeline, average and switch count. Cancelling at either prompt keeps the records. Edits, additions, removals and loads affect the next run. |
+
+The separately submitted Phase 3 screenshot report connects these automated checks to nine actual Terminal captures. The focused visual report shows the official input; FCFS, SJF, and RR; quanta 3, 2, and 1; rejected quantum 0; and a comparison that changes only the context-switch penalty from 1 to 2. This is intentionally narrower than the Phase 2 report because the inherited process-management and basic scheduling workflows were already demonstrated in the earlier submissions.
 
 ## Known limit
 

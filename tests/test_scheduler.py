@@ -249,14 +249,18 @@ class SchedulerTests(unittest.TestCase):
         self.assertEqual(first["processes"][0]["cpu_required"], 8)
 
     def test_memory_and_quantum_do_not_change_fcfs_sjf_but_penalty_does(self):
+        # Without a memory-allocation rule, memory is ignored, as in Phase 3.
         original = processes([(1, 0, 8), (2, 1, 2)])
-        # Values still pass Phase 1 validation, including matching shared fields.
+        # Values still pass validation, including matching shared fields.
         manager = PCBManager()
-        manager.add_pcb(PCB(1, 30000, 0, 8, 1, 1))
-        manager.add_pcb(PCB(2, 30000, 1, 2, 1, 1))
+        manager.add_pcb(PCB(1, 15000, 0, 8, 1, 1))
+        manager.add_pcb(PCB(2, 15000, 1, 2, 1, 1))
         slow = processes([(1, 0, 8), (2, 1, 2)], penalty=5)
         for algorithm in [schedule_fcfs, schedule_sjf]:
-            self.assertEqual(algorithm(original), algorithm(manager.get_pcbs()))
+            self.assertEqual(slice_tuples(algorithm(original)),
+                             slice_tuples(algorithm(manager.get_pcbs())))
+            self.assertEqual(turnarounds(algorithm(original)),
+                             turnarounds(algorithm(manager.get_pcbs())))
             before = algorithm(original)["processes"]
             after = algorithm(slow)["processes"]
             for a, b in zip(before, after):

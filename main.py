@@ -5,6 +5,7 @@ from pcb_manager import PCBManager
 from file_picker import choose_data_file
 from data_paths import resolve_data_path
 from scheduler import schedule_fcfs, schedule_sjf, schedule_rr, average_turnaround
+from memory_manager import FIRST_FIT, WORST_FIT, MEMORY_SIZE
 import cli_style as ui
 
 
@@ -278,8 +279,23 @@ def ask_quantum(default):
         ui.message("Error: Quantum must be a whole number greater than 0.", "error")
 
 
+def ask_fit():
+    """Asks for First-Fit or Worst-Fit; returns None if the user cancels."""
+
+    ui.option("1", FIRST_FIT + " (first hole large enough)")
+    ui.option("2", WORST_FIT + " (largest hole)")
+    ui.option("C", "Cancel", "warning")
+    while True:
+        choice = ui.ask("Choose a memory allocation algorithm (1, 2, or C): ").strip().upper()
+        if choice == "C":
+            return None
+        if choice in ["1", "2"]:
+            return FIRST_FIT if choice == "1" else WORST_FIT
+        ui.message("Error: Choose 1, 2, or C.", "error")
+
+
 def run_scheduler_from_input(manager):
-    """Chooses FCFS, SJF or Round-Robin and shows its results for the current set."""
+    """Chooses a scheduler and a memory-allocation rule, then shows the run."""
 
     # Read the current collection each time. An edit, addition, removal, or
     # new file load must be reflected in the very next scheduling run.
@@ -300,13 +316,9 @@ def run_scheduler_from_input(manager):
         if choice == "C":
             ui.message("Scheduling cancelled.", "warning")
             return
-        if choice == "1":
-            name = "FCFS"
-            schedule = schedule_fcfs(pcbs)
-            break
-        if choice == "2":
-            name = "SJF"
-            schedule = schedule_sjf(pcbs)
+        if choice in ["1", "2"]:
+            name = "FCFS" if choice == "1" else "SJF"
+            quantum = None
             break
         if choice == "3":
             # Every PCB shares one quantum, so the first record supplies the default.
@@ -315,9 +327,21 @@ def run_scheduler_from_input(manager):
                 ui.message("Scheduling cancelled.", "warning")
                 return
             name = "Round-Robin"
-            schedule = schedule_rr(pcbs, quantum)
             break
         ui.message("Error: Choose 1, 2, 3, or C.", "error")
+
+    # Phase 4: every run also places processes in memory.
+    print()
+    fit = ask_fit()
+    if fit is None:
+        ui.message("Scheduling cancelled.", "warning")
+        return
+    if name == "FCFS":
+        schedule = schedule_fcfs(pcbs, fit)
+    elif name == "SJF":
+        schedule = schedule_sjf(pcbs, fit)
+    else:
+        schedule = schedule_rr(pcbs, quantum, fit)
 
     # Calculations stay in scheduler.py; the menu supplies the explanation,
     # and cli_style.py handles layout. All times are simulated clock cycles.
@@ -327,20 +351,30 @@ def run_scheduler_from_input(manager):
     print(f"Context-switch penalty: {penalty} cycle(s) before each process starts or resumes.")
     if schedule["quantum"] is not None:
         print(f"Time quantum: {schedule['quantum']} cycles.")
+    print(f"Memory: {MEMORY_SIZE} locations (0-{MEMORY_SIZE - 1}), {fit}; "
+          "each process gets one contiguous block of exactly its size.")
     print("Timeline in CPU clock cycles (CS = context-switch penalty):")
     ui.timeline(schedule["slices"])
+    print("\nRun order (Penalty = context-switch cycles before the run):")
+    ui.run_order(schedule["slices"])
+    print("Memory events:")
+    ui.memory_events(schedule["events"])
+    print()
     ui.results_table(schedule["processes"])
     average = average_turnaround(schedule["processes"])
     print(f"Average Turnaround Time: {average:.2f} cycles")
     # Every penalty paid counts as a switch, so count x penalty is the time they add.
     print(f"Context switches: {switches} ({switches} x {penalty} = {switches * penalty} "
           "penalty cycles, including the first start)")
+    compactions = schedule["compactions"]
+    times = ", ".join(str(event["time"]) for event in compactions)
+    print(f"Compactions: {len(compactions)}" + (f" (at cycle {times})" if times else ""))
 
     # The main loop remembers this result and supplies the usual Enter pause.
     # Scheduling does not save or change any of the original process records.
-    ui.message(f"{name} completed for {len(schedule['processes'])} processes. "
+    ui.message(f"{name} with {fit} completed for {len(schedule['processes'])} processes. "
                f"Average turnaround: {average:.2f} cycles. "
-               f"Context switches: {switches}.", "success")
+               f"Context switches: {switches}. Compactions: {len(compactions)}.", "success")
 
 
 def display_menu():
@@ -354,7 +388,7 @@ def display_menu():
     ui.option("5", "Edit a PCB", "warning")
     ui.option("6", "Remove a PCB", "error")
     ui.option("7", "Exit", "error")
-    ui.option("8", "Run CPU scheduler", "schedule")
+    ui.option("8", "Run CPU scheduler with memory allocation", "schedule")
 
 
 # ---------------------------------------------------------------------------------------

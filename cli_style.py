@@ -7,7 +7,7 @@ import textwrap
 
 
 # Theme settings live here so the screens keep the same appearance.
-PROJECT_TITLE = "\n\n\nCOM326 | PROJECT PHASE 3"
+PROJECT_TITLE = "\n\n\nCOM326 | PROJECT PHASE 4"
 # These are terminal color codes. The leading 1 requests bold text.
 # This dictionary looks up a color-code string by a readable name such as "error".
 COLORS = {
@@ -116,6 +116,79 @@ RESULT_COLUMNS = [
     ("process_id", "ID"), ("arrival_time", "Arrival"), ("cpu_required", "CPU"),
     ("completion_time", "Completion"), ("turnaround_time", "Turnaround")
 ]
+# Added after the columns above when the run used memory allocation (Phase 4).
+MEMORY_COLUMNS = [("memory", "Memory"), ("memory_starts", "Location")]
+
+
+def _columns(processes):
+    """Result columns for this run: memory columns only if memory was allocated."""
+    if processes and processes[0].get("memory_starts"):
+        return RESULT_COLUMNS + MEMORY_COLUMNS
+    return RESULT_COLUMNS
+
+
+def _cell(row, name):
+    # A start-address list shows every move, e.g. 6000->0 after a compaction.
+    value = row[name]
+    return "->".join(map(str, value)) if isinstance(value, list) else str(value)
+
+
+def span(start, size):
+    """Memory range as first-last location, e.g. 500-12499."""
+    return f"{start}-{start + size - 1}"
+
+
+def run_order(slices):
+    """Lists each slice in run order with its penalty, times and memory block."""
+
+    # shortcut: fixed columns, so a very narrow window wraps lines; add a stacked layout if needed.
+    header = f"{'Run':<5}{'Process':<9}{'Penalty':<9}{'Start':<7}{'Finish':<8}{'Ran':<5}Memory"
+    print(styled(header, "heading"))
+    rule()
+    for number, piece in enumerate(slices, start=1):
+        penalty = ("-" if piece["switch_start"] is None
+                   else f"{piece['switch_start']}-{piece['start_time']}")
+        ran = piece["finish_time"] - piece["start_time"]
+        where = (f"starts at {piece['memory_start']}, size {piece['memory_size']}"
+                 if piece["memory_start"] is not None else "")
+        print(f"{number:<5}{'P' + str(piece['process_id']):<9}{penalty:<9}"
+              f"{piece['start_time']:<7}{piece['finish_time']:<8}{ran:<5}{where}")
+    rule()
+
+
+def memory_layout(layout):
+    """One line showing every block and hole in address order."""
+    parts = [(b["start"], f"P{b['process_id']} {span(b['start'], b['size'])}")
+             for b in layout["blocks"]]
+    parts += [(h["start"], f"free {span(h['start'], h['size'])}") for h in layout["holes"]]
+    return " | ".join(text for start, text in sorted(parts))
+
+
+def memory_events(events):
+    """Prints allocations, waits, releases and compactions in time order."""
+
+    count = 0
+    for event in events:
+        kind, pid, time = event["kind"], f"P{event['process_id']}", f"Cycle {event['time']}:"
+        if kind == "allocate":
+            print(f"{time} {pid} allocated at {span(event['start'], event['size'])} "
+                  f"(starts at {event['start']}, size {event['size']}).")
+        elif kind == "wait":
+            print(f"{time} {pid} waits for memory: needs {event['size']}, "
+                  f"largest hole {event['largest']}, total free {event['free']}.")
+        elif kind == "release":
+            holes = ", ".join(f"{span(h['start'], h['size'])} ({h['size']})"
+                              for h in event["holes"])
+            print(f"{time} {pid} finished and released its memory. "
+                  f"Holes after merging: {holes}.")
+        else:
+            count += 1
+            print(styled(f"{time} COMPACTION #{count} for {pid}: needs {event['size']}, "
+                         f"{event['free']} free in total but the largest hole is "
+                         f"{event['largest']}.", "warning"))
+            for move in event["moves"]:
+                print(f"    P{move['process_id']} moved {move['from']} -> {move['to']}")
+            print(f"    Memory now: {memory_layout(event['layout'])}")
 
 
 def timeline(slices):
@@ -156,15 +229,16 @@ def results_table(processes):
     """Shows each process's results sideways: one column per process."""
 
     # Sideways keeps a handful of processes compact; each row is one value.
-    labels = ["Process"] + [label for name, label in RESULT_COLUMNS[1:]]
-    rows = [[str(row[name]) for row in processes] for name, label in RESULT_COLUMNS]
+    columns = _columns(processes)
+    labels = ["Process"] + [label for name, label in columns[1:]]
+    rows = [[_cell(row, name) for row in processes] for name, label in columns]
     label_width = len("Turnaround") + 2
     # Every process column has the same width, set by the longest value.
     column = max((len(value) for row in rows for value in row), default=0) + 2
 
     if label_width + column * len(processes) > shutil.get_terminal_size().columns:
         # Too many processes to fit sideways: use one row per process instead.
-        _upright_results(processes)
+        _upright_results(processes, columns)
         return
 
     for index, (label, row) in enumerate(zip(labels, rows)):
@@ -178,12 +252,12 @@ def results_table(processes):
     rule()
 
 
-def _upright_results(processes):
+def _upright_results(processes, columns=RESULT_COLUMNS):
     """Shows one row per process, or labeled records in a narrow window."""
 
-    labels = [label for name, label in RESULT_COLUMNS]
+    labels = [label for name, label in columns]
     # These are display strings; nothing is added to the saved PCB data.
-    rows = [[str(row[name]) for name, label in RESULT_COLUMNS] for row in processes]
+    rows = [[_cell(row, name) for name, label in columns] for row in processes]
 
     # Include the headings and largest values when finding each column width.
     # This also handles long process IDs and large clock values.

@@ -1,7 +1,9 @@
-"""Calculates Phase 3 CPU schedules without changing the process definitions."""
+"""Calculates CPU schedules, with optional memory allocation, without changing the PCBs."""
 
 from collections import deque
 import copy
+
+from memory_manager import MemoryManager
 
 
 # The pcb manager supplies validated PCB objects. These functions only read them;
@@ -11,9 +13,11 @@ import copy
 # They differ in only two ways: which ready process is picked next, and
 # whether a quantum cuts a run short. Every algorithm pays the context-switch
 # penalty before a process starts or resumes.
+# Phase 4: when a memory-allocation rule (fit) is given, a process may run only
+# while it holds a block of memory. Without a fit, runs are exactly Phase 3.
 
 
-def _run(pcbs, quantum, choose):
+def _run(pcbs, quantum, choose, fit=None):
     """Runs the shared CPU loop; quantum None means each job runs to completion."""
 
     # Work on copies, so remaining_time changes never reach the manager's records.
@@ -34,14 +38,62 @@ def _run(pcbs, quantum, choose):
     completion = {}
     switches = 0
 
-    def admit():
-        # Move every process that has arrived by now to the back of the ready queue.
-        while arrivals and arrivals[0].arrival_time <= clock:
-            ready.append(arrivals.popleft())
+    memory = MemoryManager(fit) if fit else None
+    events = []        # memory events in time order: allocate, wait, release, compact
+    locations = {}     # process ID -> every start address it has had
+
+    def place(pcb, time):
+        """Gives pcb a block now if possible, compacting only when that is the only way."""
+        compaction = None
+        if memory.needs_compaction(pcb.memory):
+            # Holes are already merged on release, so if the free total fits but
+            # no single hole does, only compaction can make room.
+            free, largest = memory.free_total(), memory.largest_hole()
+            moves = memory.compact()
+            for move in moves:
+                locations[move["process_id"]].append(move["to"])
+            compaction = {"kind": "compact", "time": time, "process_id": pcb.process_id,
+                          "size": pcb.memory, "free": free, "largest": largest,
+                          "moves": moves}
+            events.append(compaction)
+        block = memory.allocate(pcb.process_id, pcb.memory)
+        if block is None:
+            return False
+        locations[pcb.process_id] = [block["start"]]
+        events.append({"kind": "allocate", "time": time, "process_id": pcb.process_id,
+                       "start": block["start"], "size": block["size"]})
+        if compaction:
+            # Report the layout after the waiting process has its new block.
+            compaction["layout"] = memory.layout()
+        return True
+
+    def admit(include_now=True):
+        # Move every process that has arrived to the back of the ready queue.
+        # include_now=False stops at arrivals strictly before the current clock.
+        while arrivals and (arrivals[0].arrival_time < clock or
+                            include_now and arrivals[0].arrival_time == clock):
+            arrived = arrivals.popleft()
+            ready.append(arrived)
+            # It joins the ready queue at once, even without memory; it just
+            # cannot be chosen to run until it gets a block (our documented choice).
+            if memory and not place(arrived, arrived.arrival_time):
+                events.append({"kind": "wait", "time": arrived.arrival_time,
+                               "process_id": arrived.process_id, "size": arrived.memory,
+                               "free": memory.free_total(),
+                               "largest": memory.largest_hole()})
+
+    def has_memory(pcb):
+        return memory is None or memory.block_of(pcb.process_id) is not None
 
     while arrivals or ready:
         admit()
-        if not ready:
+        # Only processes holding memory can run. A waiting one keeps its queue place.
+        runnable = [pcb for pcb in ready if has_memory(pcb)]
+        if not runnable:
+            if not arrivals:
+                # Unreachable while every PCB fits in memory on its own, but a
+                # clear error is better than looping forever.
+                raise RuntimeError("Processes are waiting for memory that can never be freed.")
             # Nobody can run yet. Jump to the next arrival and check again.
             # Even a very long idle gap takes just this one clock update.
             clock = arrivals[0].arrival_time
@@ -49,7 +101,7 @@ def _run(pcbs, quantum, choose):
 
         # The next process is chosen BEFORE its penalty is paid. A shorter job
         # that arrives during the penalty waits for the next choice.
-        pcb = choose(ready)
+        pcb = choose(runnable)
         ready.remove(pcb)
 
         switch_start = None
@@ -68,21 +120,36 @@ def _run(pcbs, quantum, choose):
         start_time = clock
         clock += run
         pcb.remaining_time -= run
+        block = memory.block_of(pcb.process_id) if memory else None
         slices.append({
             "process_id": pcb.process_id,
             "switch_start": switch_start,
             "start_time": start_time,
             "finish_time": clock,
-            "remaining": pcb.remaining_time
+            "remaining": pcb.remaining_time,
+            # Where the process sat in memory during this slice (None without memory).
+            "memory_start": block["start"] if block else None,
+            "memory_size": block["size"] if block else None
         })
 
+        # Arrivals during the run try for memory as it was during the run.
+        admit(include_now=False)
+        if not pcb.remaining_time:
+            completion[pcb.process_id] = clock
+            if memory:
+                memory.release(pcb.process_id)
+                events.append({"kind": "release", "time": clock,
+                               "process_id": pcb.process_id, "holes": memory.layout()["holes"]})
+                # Waiting processes, in ready-queue order, get the first try at
+                # the freed space. Any that fit are placed, even out of order.
+                for waiting in ready:
+                    if not has_memory(waiting):
+                        place(waiting, clock)
         # Arrivals at this same instant enter the queue BEFORE the process
         # whose quantum just expired (our documented choice).
         admit()
         if pcb.remaining_time:
             ready.append(pcb)
-        else:
-            completion[pcb.process_id] = clock
         last = pcb
 
     # One row per process, in the original collection order.
@@ -92,7 +159,10 @@ def _run(pcbs, quantum, choose):
         "arrival_time": pcb.arrival_time,
         "cpu_required": pcb.cpu_required,
         "completion_time": completion[pcb.process_id],
-        "turnaround_time": completion[pcb.process_id] - pcb.arrival_time
+        "turnaround_time": completion[pcb.process_id] - pcb.arrival_time,
+        "memory": pcb.memory,
+        # Every start address in order; more than one means compaction moved it.
+        "memory_starts": locations.get(pcb.process_id, [])
     } for pcb in pcbs]
 
     return {
@@ -100,7 +170,11 @@ def _run(pcbs, quantum, choose):
         "processes": processes,
         "context_switches": switches,
         "penalty": penalty,
-        "quantum": quantum
+        "quantum": quantum,
+        "fit": fit,
+        "memory_size": memory.size if memory else None,
+        "events": events,
+        "compactions": [event for event in events if event["kind"] == "compact"]
     }
 
 
@@ -116,23 +190,23 @@ def _shortest(ready):
     return min(ready, key=lambda pcb: (pcb.cpu_required, pcb.arrival_time))
 
 
-def schedule_fcfs(pcbs): # First-Come, First-Served
+def schedule_fcfs(pcbs, fit=None): # First-Come, First-Served
     """Runs processes by arrival time; equal arrivals keep their input order."""
-    return _run(pcbs, None, _front)
+    return _run(pcbs, None, _front, fit)
 
 
-def schedule_sjf(pcbs): # Shortest Job First
+def schedule_sjf(pcbs, fit=None): # Shortest Job First
     """Runs the shortest ready job each time the CPU becomes free."""
-    return _run(pcbs, None, _shortest)
+    return _run(pcbs, None, _shortest, fit)
 
 
-def schedule_rr(pcbs, quantum): # Round-Robin
+def schedule_rr(pcbs, quantum, fit=None): # Round-Robin
     """Gives each ready process up to `quantum` cycles in turn."""
 
     # bool is a kind of int in Python, so rule it out explicitly.
     if not isinstance(quantum, int) or isinstance(quantum, bool) or quantum <= 0:
         raise ValueError("Quantum must be a positive whole number of clock cycles.")
-    return _run(pcbs, quantum, _front)
+    return _run(pcbs, quantum, _front, fit)
 
 
 def average_turnaround(processes):

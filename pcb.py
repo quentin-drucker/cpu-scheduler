@@ -1,5 +1,7 @@
 """Defines the six values stored for one process and their individual checks."""
 
+from memory_manager import MEMORY_SIZE
+
 
 class PCB:
     """Keeps one process record together in a single object."""
@@ -59,10 +61,14 @@ class PCB:
         if not isinstance(self.context_switch_penalty, int):
             raise ValueError("Context-switch penalty must be an integer.")
 
-        # Memory must be positive. Phases 1 and 2 do not enforce a total limit.
-        # The assignment also does not require a positive process ID.
+        # Memory must be positive. Phase 4 adds an upper limit: a process larger
+        # than the whole memory could never be given a block, so it never runs.
+        # The assignment does not require a positive process ID.
         if self.memory <= 0:
             raise ValueError("Memory must be greater than 0.")
+
+        if self.memory > MEMORY_SIZE:
+            raise ValueError(f"Memory must be {MEMORY_SIZE} or less (the total memory size).")
 
         # Arrival at time zero is allowed, but a negative arrival is not.
         if self.arrival_time < 0:

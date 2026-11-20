@@ -10,6 +10,7 @@ from unittest.mock import patch
 import cli_style as ui
 from main import (main, run_scheduler_from_input, edit_pcb_from_input,
                   add_pcb_from_input, remove_pcb_from_input, load_pcbs_from_input)
+from pcb import PCB
 from pcb_manager import PCBManager
 
 
@@ -22,6 +23,14 @@ class SchedulingMenuTests(unittest.TestCase):
     def setUp(self):
         self.manager = PCBManager()
         self.manager.load_from_file(ROOT / "data/phase3_official.txt")
+        # These menu tests keep the hand-checked Phase 3 values, so each process
+        # gets 1000 locations: all six fit at once and memory never delays a run.
+        # Phase 4 memory behavior has its own tests in test_phase4_ui.py.
+        for pcb in list(self.manager.get_pcbs()):
+            values = {name: getattr(pcb, name) for name in [
+                "process_id", "arrival_time", "cpu_required", "quantum",
+                "context_switch_penalty"]}
+            self.manager.update_pcb(pcb.process_id, PCB(memory=1000, **values))
 
     def run_prompt(self, function, answers):
         # Reuse real menu code with supplied keyboard answers. Results still
@@ -43,11 +52,11 @@ class SchedulingMenuTests(unittest.TestCase):
 
     def test_three_choices_show_timeline_average_and_switches(self):
         for answers, name, short, average, switches, first_line in [
-            (["1"], "FCFS Schedule", "FCFS", "20.17", 6,
+            (["1", "1"], "FCFS Schedule", "FCFS", "20.17", 6,
              "0 CS 1 P0 9 CS 10 P1 18 CS 19 P2 20 CS 21 P3 24 CS 25 P4 29 CS 30 P5 34"),
-            (["2"], "SJF Schedule", "SJF", "16.83", 6,
+            (["2", "1"], "SJF Schedule", "SJF", "16.83", 6,
              "0 CS 1 P0 9 CS 10 P2 11 CS 12 P3 15 CS 16 P4 20 CS 21 P5 25 CS 26 P1 34"),
-            (["3", ""], "Round-Robin Schedule", "Round-Robin", "25.67", 12,
+            (["3", "", "1"], "Round-Robin Schedule", "Round-Robin", "25.67", 12,
              "0 CS 1 P0 4 CS 5 P1 8 CS 9 P2 10 CS 11 P3 14 CS 15 P4 18 CS 19 P5 22"),
         ]:
             with self.subTest(algorithm=name):
@@ -66,8 +75,8 @@ class SchedulingMenuTests(unittest.TestCase):
                     f"Average Turnaround Time: {average} cycles",
                     f"Context switches: {switches} ({switches} x 1 = {switches} "
                     "penalty cycles, including the first start)",
-                    f"{short} completed for 6 processes. Average turnaround: "
-                    f"{average} cycles. Context switches: {switches}.",
+                    f"{short} with First-Fit completed for 6 processes. Average turnaround: "
+                    f"{average} cycles. Context switches: {switches}. Compactions: 0.",
                 ]
                 positions = [lines.index(text) for text in expected]
                 self.assertEqual(positions, sorted(positions))
@@ -81,7 +90,7 @@ class SchedulingMenuTests(unittest.TestCase):
 
     def test_quantum_override_and_validation(self):
         output = self.run_prompt(run_scheduler_from_input,
-                                 ["3", "0", "-2", "abc", "2.5", " 2 "])
+                                 ["3", "0", "-2", "abc", "2.5", " 2 ", "1"])
         self.assertEqual(output.count(QUANTUM_ERROR), 4)
         self.assertIn("Time quantum: 2 cycles.", output)
         self.assertIn("Average Turnaround Time: 27.50 cycles", output)
@@ -98,8 +107,14 @@ class SchedulingMenuTests(unittest.TestCase):
         self.assertEqual(ui.last_result, "Scheduling cancelled.")
         self.assertNotIn("Average Turnaround", output)
         self.assertEqual([vars(pcb) for pcb in self.manager.get_pcbs()], before)
-        output = self.run_prompt(run_scheduler_from_input, ["wrong", " 2 "])
-        self.assertIn("SJF completed", output)
+        # Cancelling at the new memory-allocation prompt also changes nothing.
+        output = self.run_prompt(run_scheduler_from_input, ["1", "3", "x", "c"])
+        self.assertEqual(output.count("Error: Choose 1, 2, or C."), 2)
+        self.assertEqual(ui.last_result, "Scheduling cancelled.")
+        self.assertNotIn("Average Turnaround", output)
+        self.assertEqual([vars(pcb) for pcb in self.manager.get_pcbs()], before)
+        output = self.run_prompt(run_scheduler_from_input, ["wrong", " 2 ", " 2 "])
+        self.assertIn("SJF with Worst-Fit completed", output)
 
     def test_empty_does_not_ask_for_algorithm_or_show_average(self):
         self.manager = PCBManager()
@@ -111,37 +126,38 @@ class SchedulingMenuTests(unittest.TestCase):
     def test_edit_cpu_and_arrival_affects_next_run(self):
         # Process 0 now needs 1 cycle: penalty 0-1, run 1-2, turnaround 2.
         self.run_prompt(edit_pcb_from_input, ["0", "4", "1"])
-        output = self.run_prompt(run_scheduler_from_input, ["1"])
+        output = self.run_prompt(run_scheduler_from_input, ["1", "1"])
         self.assertEqual(self.turnarounds(output)[0], 2)
         # Arriving at 20, process 0 is the shortest job ready when P4 ends at 21.
         self.run_prompt(edit_pcb_from_input, ["0", "3", "20"])
-        output = self.run_prompt(run_scheduler_from_input, ["2"])
+        output = self.run_prompt(run_scheduler_from_input, ["2", "1"])
         self.assertEqual(self.turnarounds(output), [3, 9, 10, 13, 18, 24])
 
     def test_add_remove_and_load_affect_next_run(self):
         self.run_prompt(add_pcb_from_input, ["99", "1000", "0", "1", "3", "1"])
-        output = self.run_prompt(run_scheduler_from_input, ["2"])
+        output = self.run_prompt(run_scheduler_from_input, ["2", "1"])
         self.assertIn("0 CS 1 P99 2 CS", output)
         self.run_prompt(remove_pcb_from_input, ["99", "Y"])
-        output = self.run_prompt(run_scheduler_from_input, ["2"])
+        output = self.run_prompt(run_scheduler_from_input, ["2", "1"])
         self.assertIn("0 CS 1 P0 9 CS 10 P2 11 CS 12 P3 15 CS 16 P4 20 CS 21 P5 25 CS 26 P1 34",
                       output.splitlines())
         self.run_prompt(load_pcbs_from_input, ["M", str(ROOT / "data/phase2_idle.txt")])
-        output = self.run_prompt(run_scheduler_from_input, ["1"])
+        output = self.run_prompt(run_scheduler_from_input, ["1", "1"])
         self.assertIn("0 idle 5 CS 6 P1 8 idle 12 CS 13 P2 14", output.splitlines())
         self.assertEqual(self.turnarounds(output), [3, 2])
 
     def test_full_menu_runs_both_then_views_unchanged_data(self):
         answers = ["1", "M", str(ROOT / "data/phase2_official.txt"),
-                   "8", "1", "8", "2", "8", "3", "", "2", "7"]
+                   "8", "1", "1", "8", "2", "1", "8", "3", "", "1", "2", "7"]
         with patch("builtins.input", side_effect=answers):
             with redirect_stdout(io.StringIO()) as output:
                 main()
         text = output.getvalue()
-        self.assertIn("Average Turnaround Time: 7.40 cycles", text)
-        self.assertIn("Average Turnaround Time: 7.20 cycles", text)
-        self.assertIn("Round-Robin completed for 5 processes. Average turnaround: 7.40 cycles.",
-                      text)
+        # With 15000 locations, P2 (12000) waits for memory until cycle 6, so SJF
+        # can no longer run it first at cycle 3: SJF is 7.40 here, not Phase 3's 7.20.
+        for name in ["FCFS", "SJF", "Round-Robin"]:
+            self.assertIn(f"{name} with First-Fit completed for 5 processes. "
+                          "Average turnaround: 7.40 cycles.", text)
         self.assertIn("Total PCBs: 5", text)
         self.assertIn("Exiting Process Manager", text)
         self.assertNotIn("Error:", text)
@@ -150,7 +166,7 @@ class SchedulingMenuTests(unittest.TestCase):
         # The extra empty strings acknowledge each normal main-menu pause.
         # Too many pauses would consume an algorithm/menu answer and fail.
         answers = ["1", "M", str(ROOT / "data/phase2_official.txt"), "",
-                   "8", "1", "", "8", "C", "", "7"]
+                   "8", "1", "1", "", "8", "C", "", "7"]
         with patch.object(ui, "interactive", return_value=True):
             with patch.object(ui, "terminal_effects", return_value=False):
                 with patch("builtins.input", side_effect=answers) as read:
@@ -158,7 +174,7 @@ class SchedulingMenuTests(unittest.TestCase):
                         main()
         self.assertEqual(read.call_count, len(answers))
         text = output.getvalue()
-        self.assertIn("Previous action: Schedule: FCFS completed", text)
+        self.assertIn("Previous action: Schedule: FCFS with First-Fit completed", text)
         self.assertIn("Previous action: Schedule: Scheduling cancelled.", text)
         final_menu = text.rsplit("Previous action:", 1)[1]
         self.assertNotIn("completed", final_menu)
