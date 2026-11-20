@@ -3,6 +3,7 @@ Assignment Specifications/
 
 # Local planning notes (kept locally, not published)
 plans/
+PHASE4_HANDOFF_PROMPT.md
 
 # Python
 __pycache__/
@@ -10,3 +11,6 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Local copy of the Phase 4 Moodle data file (instructor material)
+data/official/
