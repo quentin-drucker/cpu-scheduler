@@ -118,12 +118,15 @@ class RequirementTests(unittest.TestCase):
                 self.assertIn("Error:", output)
                 self.assertEqual([p.process_id for p in self.manager.get_pcbs()], [90])
 
-    def test_valid_boundary_values_and_no_total_memory_limit(self):
+    def test_valid_boundary_values_and_phase4_memory_limit(self):
+        # Phase 4: one process may use the whole 15000 locations, but no more.
         self.manager = PCBManager()
         for process_id in [0, -1]:
             output = self.run_prompt(add_pcb_from_input,
-                                     [str(process_id), "20000", "0", "1", "1", "1"])
+                                     [str(process_id), "15000", "0", "1", "1", "1"])
             self.assertIn("added successfully", output)
+        output = self.run_prompt(add_pcb_from_input, ["5", "15001", "0", "1", "1", "1"])
+        self.assertIn("Error: Memory must be 15000 or less", output)
         self.assertEqual(len(self.manager.get_pcbs()), 2)
 
     def test_display_empty_and_full_collection(self):
